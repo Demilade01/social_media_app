@@ -1,25 +1,32 @@
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate, useParams } from "react-router-dom";
 
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { useUserContext } from "@/context/AuthContext"
-import { useToast } from "@/components/ui/use-toast"
-import { useNavigate, useParams } from "react-router-dom"
-import { ProfileValidation } from "@/lib/validation"
-import { useGetUserById, useUpdateUser } from "@/lib/react-query/queriesAndMutations"
-import Loader from "@/components/shared/Loader"
-import ProfileUploader from "@/components/shared/ProfileUploader"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useToast } from "@/components/ui/use-toast";
+import { ProfileValidation } from "@/lib/validation";
+import { useUserContext } from "@/context/AuthContext";
+import Loader from "@/components/shared/Loader";
+import { useGetUserById, useUpdateUser } from "@/lib/react-query/queriesAndMutations";
+import ProfileUploader from "@/components/shared/ProfileUploader";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 
 const UpdateProfile = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { id } = useParams();
   const { user, setUser } = useUserContext();
-  const navigate = useNavigate();
   const form = useForm<z.infer<typeof ProfileValidation>>({
     resolver: zodResolver(ProfileValidation),
     defaultValues: {
@@ -31,18 +38,20 @@ const UpdateProfile = () => {
     },
   });
 
+  // Queries
   const { data: currentUser } = useGetUserById(id || "");
-  const { mutateAsync : updateUser, isPending: isLoadingUpdate } = useUpdateUser();
+  const { mutateAsync: updateUser, isPending: isLoadingUpdate } =
+    useUpdateUser();
 
-  if(!currentUser){
+  if (!currentUser)
     return (
       <div className="flex-center w-full h-full">
         <Loader />
       </div>
-    )
-  }
+    );
 
-  const handleUpdate = async ( value: z.infer<typeof ProfileValidation>) => {
+  // Handler
+  const handleUpdate = async (value: z.infer<typeof ProfileValidation>) => {
     const updatedUser = await updateUser({
       userId: currentUser.$id,
       name: value.name,
@@ -52,21 +61,20 @@ const UpdateProfile = () => {
       imageId: currentUser.imageId,
     });
 
-    if(!updatedUser) {
+    if (!updatedUser) {
       toast({
         title: `Update user failed. Please try again.`,
-      })
+      });
     }
 
-    setUser ({
+    setUser({
       ...user,
-      name: updateUser?.name,
-      bio: updateUser?.bio,
-      imageUrl: updateUser?.imageUrl
-    })
-    return navigate(`/profile/${id}`)
-  }
-
+      name: updatedUser?.name,
+      bio: updatedUser?.bio,
+      imageUrl: updatedUser?.imageUrl,
+    });
+    return navigate(`/profile/${id}`);
+  };
 
   return (
     <div className="flex flex-1">
@@ -83,17 +91,19 @@ const UpdateProfile = () => {
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleUpdate)} className="flex flex-col gap-9 w-full max-w-5xl">
+          <form
+            onSubmit={form.handleSubmit(handleUpdate)}
+            className="flex flex-col gap-7 w-full mt-4 max-w-5xl">
             <FormField
               control={form.control}
               name="file"
               render={({ field }) => (
                 <FormItem className="flex">
                   <FormControl>
-                   <ProfileUploader
-                    fieldChange= {field.onChange}
-                    mediaUrl = { currentUser.imageUrl}
-                   />
+                    <ProfileUploader
+                      fieldChange={field.onChange}
+                      mediaUrl={currentUser.imageUrl}
+                    />
                   </FormControl>
                   <FormMessage className="shad-form_message" />
                 </FormItem>
@@ -109,10 +119,11 @@ const UpdateProfile = () => {
                   <FormControl>
                     <Input type="text" className="shad-input" {...field} />
                   </FormControl>
-                  <FormMessage className="shad-form_message" />
+                  <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="username"
@@ -124,12 +135,14 @@ const UpdateProfile = () => {
                       type="text"
                       className="shad-input"
                       {...field}
+                      disabled
                     />
                   </FormControl>
-                  <FormMessage className="shad-form_message" />
+                  <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="email"
@@ -137,22 +150,24 @@ const UpdateProfile = () => {
                 <FormItem>
                   <FormLabel className="shad-form_label">Email</FormLabel>
                   <FormControl>
-                    <Input type="text" className="shad-input"
-                    {...field}
+                    <Input
+                      type="text"
+                      className="shad-input"
+                      {...field}
+                      disabled
                     />
                   </FormControl>
-                  <FormMessage className="shad-form_message" />
+                  <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="bio"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="shad-form_label">
-                    Bio
-                  </FormLabel>
+                  <FormLabel className="shad-form_label">Bio</FormLabel>
                   <FormControl>
                     <Textarea
                       className="shad-textarea custom-scrollbar"
@@ -163,19 +178,18 @@ const UpdateProfile = () => {
                 </FormItem>
               )}
             />
+
             <div className="flex gap-4 items-center justify-end">
               <Button
                 type="button"
                 className="shad-button_dark_4"
-                onClick={() => navigate(-1)}
-              >
+                onClick={() => navigate(-1)}>
                 Cancel
               </Button>
               <Button
                 type="submit"
                 className="shad-button_primary whitespace-nowrap"
-                disabled={isLoadingUpdate || isLoadingUpdate}
-              >
+                disabled={isLoadingUpdate}>
                 {isLoadingUpdate && <Loader />}
                 Update Profile
               </Button>
@@ -184,7 +198,7 @@ const UpdateProfile = () => {
         </Form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default UpdateProfile
+export default UpdateProfile;
